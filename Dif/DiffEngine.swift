@@ -26,6 +26,8 @@ struct DiffResult: Sendable {
 }
 
 enum DiffEngine {
+    private typealias IndexedLine = (number: Int, text: String)
+
     static func compare(_ left: String, _ right: String, ignoringWhitespace: Bool = false) -> DiffResult {
         let indexedLeft = lines(in: left).enumerated().map { (number: $0.offset, text: $0.element) }
         let indexedRight = lines(in: right).enumerated().map { (number: $0.offset, text: $0.element) }
@@ -40,13 +42,34 @@ enum DiffEngine {
         let changes = comparedRight.difference(from: comparedLeft)
 
         let removed = Set(changes.removals.compactMap { change -> Int? in
-            if case let .remove(offset, _, _) = change { return offset }
+            if case let .remove(offset, _, _) = change {
+                return offset
+            }
             return nil
         })
         let added = Set(changes.insertions.compactMap { change -> Int? in
-            if case let .insert(offset, _, _) = change { return offset }
+            if case let .insert(offset, _, _) = change {
+                return offset
+            }
             return nil
         })
+
+        return alignedResult(
+            leftLines: leftLines,
+            rightLines: rightLines,
+            removed: removed,
+            added: added,
+            sameIgnoringWhitespace: sameIgnoringWhitespace
+        )
+    }
+
+    private static func alignedResult(
+        leftLines: [IndexedLine],
+        rightLines: [IndexedLine],
+        removed: Set<Int>,
+        added: Set<Int>,
+        sameIgnoringWhitespace: Bool
+    ) -> DiffResult {
         var rows: [DiffRow] = []
         var leftChanged: Set<Int> = []
         var rightChanged: Set<Int> = []
@@ -64,14 +87,19 @@ enum DiffEngine {
                 kind: effectiveKind
             ))
             if effectiveKind != .unchanged {
-                if let leftIndex { leftChanged.insert(leftLines[leftIndex].number) }
-                if let rightIndex { rightChanged.insert(rightLines[rightIndex].number) }
+                if let leftIndex {
+                    leftChanged.insert(leftLines[leftIndex].number)
+                }
+                if let rightIndex {
+                    rightChanged.insert(rightLines[rightIndex].number)
+                }
             }
         }
 
         while leftIndex < leftLines.count || rightIndex < rightLines.count {
-            if leftIndex < leftLines.count, rightIndex < rightLines.count,
-               !removed.contains(leftIndex), !added.contains(rightIndex) {
+            let commonLine = leftIndex < leftLines.count && rightIndex < rightLines.count &&
+                !removed.contains(leftIndex) && !added.contains(rightIndex)
+            if commonLine {
                 append(leftIndex, rightIndex, .unchanged)
                 leftIndex += 1
                 rightIndex += 1
@@ -88,7 +116,7 @@ enum DiffEngine {
                 addedLines.append(rightIndex)
                 rightIndex += 1
             }
-            for offset in 0..<max(removedLines.count, addedLines.count) {
+            for offset in 0 ..< max(removedLines.count, addedLines.count) {
                 let old = offset < removedLines.count ? removedLines[offset] : nil
                 let new = offset < addedLines.count ? addedLines[offset] : nil
                 let kind: DiffKind = old != nil && new != nil ? .modified : (old != nil ? .removed : .added)

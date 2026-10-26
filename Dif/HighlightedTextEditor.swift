@@ -8,7 +8,9 @@ struct HighlightedTextEditor: NSViewRepresentable {
     let color: NSColor
     let onFileDrop: (URL) -> Void
 
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -16,13 +18,17 @@ struct HighlightedTextEditor: NSViewRepresentable {
         scrollView.borderType = .noBorder
         scrollView.hasVerticalScroller = true
         textView.minSize = .zero
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
-                                  height: CGFloat.greatestFiniteMagnitude)
+        textView.maxSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
-        textView.textContainer?.containerSize = NSSize(width: scrollView.contentSize.width,
-                                                        height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.containerSize = NSSize(
+            width: scrollView.contentSize.width,
+            height: CGFloat.greatestFiniteMagnitude
+        )
         textView.textContainer?.widthTracksTextView = true
         textView.delegate = context.coordinator
         textView.onFileDrop = onFileDrop
@@ -47,10 +53,16 @@ struct HighlightedTextEditor: NSViewRepresentable {
         context.coordinator.parent = self
         (textView as? FileDropTextView)?.onFileDrop = onFileDrop
         let textChanged = textView.string != text
-        if textChanged { textView.string = text }
+        if textChanged {
+            textView.string = text
+        }
         let wrapChanged = textView.isHorizontallyResizable != disableLineWrap
-        if wrapChanged { configureLineWrap(scrollView, textView) }
-        if disableLineWrap && (textChanged || wrapChanged) { textView.sizeToFit() }
+        if wrapChanged {
+            configureLineWrap(scrollView, textView)
+        }
+        if disableLineWrap, textChanged || wrapChanged {
+            textView.sizeToFit()
+        }
         guard let layoutManager = textView.layoutManager else { return }
         let fullRange = NSRange(location: 0, length: (textView.string as NSString).length)
         layoutManager.removeTemporaryAttribute(.backgroundColor, forCharacterRange: fullRange)
@@ -61,11 +73,18 @@ struct HighlightedTextEditor: NSViewRepresentable {
             var start = 0
             var end = 0
             var contentsEnd = 0
-            nsText.getLineStart(&start, end: &end, contentsEnd: &contentsEnd,
-                                for: NSRange(location: position, length: 0))
+            nsText.getLineStart(
+                &start,
+                end: &end,
+                contentsEnd: &contentsEnd,
+                for: NSRange(location: position, length: 0)
+            )
             if changedLines.contains(line) {
-                layoutManager.addTemporaryAttribute(.backgroundColor, value: color,
-                                                    forCharacterRange: NSRange(location: start, length: end - start))
+                layoutManager.addTemporaryAttribute(
+                    .backgroundColor,
+                    value: color,
+                    forCharacterRange: NSRange(location: start, length: end - start)
+                )
             }
             position = end
             line += 1
@@ -81,13 +100,17 @@ struct HighlightedTextEditor: NSViewRepresentable {
             width: disableLineWrap ? CGFloat.greatestFiniteMagnitude : scrollView.contentSize.width,
             height: CGFloat.greatestFiniteMagnitude
         )
-        if disableLineWrap { textView.sizeToFit() }
+        if disableLineWrap {
+            textView.sizeToFit()
+        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: HighlightedTextEditor
 
-        init(_ parent: HighlightedTextEditor) { self.parent = parent }
+        init(_ parent: HighlightedTextEditor) {
+            self.parent = parent
+        }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
@@ -102,7 +125,7 @@ private final class FileDropTextView: NSTextView {
     private func droppedFile(_ sender: NSDraggingInfo) -> URL? {
         let options: [NSPasteboard.ReadingOptionKey: Any] = [.urlReadingFileURLsOnly: true]
         return (sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: options)
-                as? [NSURL])?.first.map { $0 as URL }
+            as? [NSURL])?.first.map { $0 as URL }
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {

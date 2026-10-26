@@ -1,6 +1,6 @@
+@testable import Dif
 import Foundation
 import XCTest
-@testable import Dif
 
 final class TextFileLoaderTests: XCTestCase {
     func testUTF8BOM() throws {
@@ -9,7 +9,7 @@ final class TextFileLoaderTests: XCTestCase {
     }
 
     func testUTF16BOM() throws {
-        let data = "hello".data(using: .utf16)!
+        let data = try XCTUnwrap("hello".data(using: .utf16))
         XCTAssertEqual(try TextFileLoader.decode(data), "hello")
     }
 

@@ -1,5 +1,5 @@
-import XCTest
 @testable import Dif
+import XCTest
 
 final class DiffEngineTests: XCTestCase {
     func testInsertionAndDeletion() {

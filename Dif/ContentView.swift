@@ -30,10 +30,18 @@ struct ContentView: View {
                     comparison
                 } else {
                     HSplitView {
-                        editorPane(title: $leftTitle, text: $leftText,
-                                   changedLines: result.leftChangedLines, side: .left)
-                        editorPane(title: $rightTitle, text: $rightText,
-                                   changedLines: result.rightChangedLines, side: .right)
+                        editorPane(
+                            title: $leftTitle,
+                            text: $leftText,
+                            changedLines: result.leftChangedLines,
+                            side: .left
+                        )
+                        editorPane(
+                            title: $rightTitle,
+                            text: $rightText,
+                            changedLines: result.rightChangedLines,
+                            side: .right
+                        )
                     }
                 }
             }
@@ -43,7 +51,11 @@ struct ContentView: View {
         .onChange(of: hideWhitespaceChanges) { _, _ in scheduleComparison() }
         .alert("Could not open file", isPresented: Binding(
             get: { errorMessage != nil },
-            set: { if !$0 { errorMessage = nil } }
+            set: {
+                if !$0 {
+                    errorMessage = nil
+                }
+            }
         )) {
             Button("OK", role: .cancel) { errorMessage = nil }
         } message: {
@@ -66,14 +78,16 @@ struct ContentView: View {
                 .font(.headline)
             Spacer()
             Text(result.changeCount == 0 ? "No differences" :
-                    "\(result.changeCount) \(result.changeCount == 1 ? "change" : "changes")")
+                "\(result.changeCount) \(result.changeCount == 1 ? "change" : "changes")")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Button {
                 showsComparison.toggle()
             } label: {
-                Label(showsComparison ? "Edit texts" : "View comparison",
-                      systemImage: showsComparison ? "square.and.pencil" : "square.split.2x1")
+                Label(
+                    showsComparison ? "Edit texts" : "View comparison",
+                    systemImage: showsComparison ? "square.and.pencil" : "square.split.2x1"
+                )
             }
         }
         .padding(.horizontal, 16)
@@ -94,8 +108,12 @@ struct ContentView: View {
         .background(Color(nsColor: .controlBackgroundColor))
     }
 
-    private func editorPane(title: Binding<String>, text: Binding<String>,
-                            changedLines: Set<Int>, side: Side) -> some View {
+    private func editorPane(
+        title: Binding<String>,
+        text: Binding<String>,
+        changedLines: Set<Int>,
+        side: Side
+    ) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 TextField("Label", text: title)
@@ -127,13 +145,12 @@ struct ContentView: View {
         .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }
             provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { item, _ in
-                let url: URL?
-                if let item = item as? URL {
-                    url = item
+                let url: URL? = if let item = item as? URL {
+                    item
                 } else if let data = item as? Data {
-                    url = NSURL(absoluteURLWithDataRepresentation: data, relativeTo: nil) as URL
+                    NSURL(absoluteURLWithDataRepresentation: data, relativeTo: nil) as URL
                 } else {
-                    url = nil
+                    nil
                 }
                 if let url {
                     DispatchQueue.main.async { loadFile(url, into: side) }
@@ -142,8 +159,10 @@ struct ContentView: View {
             return true
         }
     }
+}
 
-    private var comparison: some View {
+private extension ContentView {
+    var comparison: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Label(leftTitle, systemImage: "minus")
@@ -158,9 +177,12 @@ struct ContentView: View {
             .padding(.horizontal, 14)
             .frame(height: 40)
             Divider()
-            if leftText.isEmpty && rightText.isEmpty {
-                ContentUnavailableView("Ready to compare", systemImage: "square.split.2x1",
-                                       description: Text("Paste text or drop a file into each side."))
+            if leftText.isEmpty, rightText.isEmpty {
+                ContentUnavailableView(
+                    "Ready to compare",
+                    systemImage: "square.split.2x1",
+                    description: Text("Paste text or drop a file into each side.")
+                )
             } else {
                 GeometryReader { geometry in
                     if disableLineWrap {
@@ -187,14 +209,20 @@ struct ContentView: View {
                                 }
                                 ForEach(result.rows) { row in
                                     HStack(alignment: .top, spacing: 0) {
-                                        comparisonCell(number: row.leftNumber, text: row.leftText,
-                                                       color: row.kind == .unchanged || row.leftText == nil
-                                                           ? .clear : Color.red.opacity(0.14),
-                                                       width: geometry.size.width / 2)
-                                        comparisonCell(number: row.rightNumber, text: row.rightText,
-                                                       color: row.kind == .unchanged || row.rightText == nil
-                                                           ? .clear : Color.green.opacity(0.14),
-                                                       width: geometry.size.width / 2)
+                                        comparisonCell(
+                                            number: row.leftNumber,
+                                            text: row.leftText,
+                                            color: row.kind == .unchanged || row.leftText == nil
+                                                ? .clear : Color.red.opacity(0.14),
+                                            width: geometry.size.width / 2
+                                        )
+                                        comparisonCell(
+                                            number: row.rightNumber,
+                                            text: row.rightText,
+                                            color: row.kind == .unchanged || row.rightText == nil
+                                                ? .clear : Color.green.opacity(0.14),
+                                            width: geometry.size.width / 2
+                                        )
                                     }
                                     Divider()
                                 }
@@ -212,12 +240,14 @@ struct ContentView: View {
         return ScrollView(.horizontal) {
             LazyVStack(spacing: 0) {
                 ForEach(result.rows) { row in
-                    comparisonCell(number: side == .left ? row.leftNumber : row.rightNumber,
-                                   text: side == .left ? row.leftText : row.rightText,
-                                   color: row.kind == .unchanged ||
-                                       (side == .left ? row.leftText : row.rightText) == nil
-                                       ? .clear : (side == .left ? Color.red : Color.green).opacity(0.14),
-                                   width: width)
+                    comparisonCell(
+                        number: side == .left ? row.leftNumber : row.rightNumber,
+                        text: side == .left ? row.leftText : row.rightText,
+                        color: row.kind == .unchanged ||
+                            (side == .left ? row.leftText : row.rightText) == nil
+                            ? .clear : (side == .left ? Color.red : Color.green).opacity(0.14),
+                        width: width
+                    )
                     Divider()
                 }
             }
@@ -230,14 +260,18 @@ struct ContentView: View {
     private func unwrappedColumnWidth(for side: Side) -> CGFloat {
         let font = NSFont.monospacedSystemFont(ofSize: 12, weight: .regular)
         let textWidth = result.rows.map { side == .left ? $0.leftText : $0.rightText }
-            .compactMap { $0 }
+            .compactMap(\.self)
             .map { ($0 as NSString).size(withAttributes: [.font: font]).width }
             .max() ?? 0
         return textWidth + 70
     }
 
-    private func comparisonCell(number: Int?, text: String?, color: Color,
-                                width: CGFloat) -> some View {
+    private func comparisonCell(
+        number: Int?,
+        text: String?,
+        color: Color,
+        width: CGFloat
+    ) -> some View {
         HStack(alignment: .top, spacing: 8) {
             Text(number.map(String.init) ?? "")
                 .foregroundStyle(.tertiary)
