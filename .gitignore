@@ -1,0 +1,47 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Xcode user state
+*.xcuserstate
+*.xcscmblueprint
+xcuserdata/
+*.moved-aside
+
+# Xcode build products
+build/
+DerivedData/
+dist/
+.goreleaser-dist/
+com.apple.DeveloperTools/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods / Carthage, kept out unless the project intentionally adopts them
+Pods/
+Carthage/Build/
+
+# AppCode / JetBrains
+.idea/
+
+# SwiftLint / SwiftFormat caches
+.swiftlint_cache/
+.swiftformat.cache
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Local environment
+.env
+.env.*
