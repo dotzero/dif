@@ -1,6 +1,6 @@
 # Dif
 
-![Dif app icon](Dif/Assets.xcassets/AppIcon.appiconset/icon_128.png)
+![Dif app icon](Dif/Assets.xcassets/AppIcon.appiconset/icon_256x256.png)
 
 **Fast text comparison, without the clutter.** Dif keeps things simple: two panes, clear highlights, and just the controls you need. Paste text or drop in files; the diff updates as you edit.
 
