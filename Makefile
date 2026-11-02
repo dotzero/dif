@@ -6,7 +6,7 @@ MARKETING_VERSION ?= $(VERSION)
 BUILD_PATH := build
 DERIVED_DATA_PATH := $(BUILD_PATH)/DerivedData
 
-.PHONY: help build release test lint check clean
+.PHONY: help build release test lint check publish clean
 
 .DEFAULT_GOAL := help
 
@@ -37,6 +37,13 @@ lint: ## Run linting
 	swiftlint --strict --no-cache --config .swiftlint.yml
 
 check: lint test ## Run linting and tests
+
+---------------: ## ---------------
+
+publish: ## Package the app into DMG formats and publish to GitHub releases
+	@test -n "$(VERSION)" || { echo "usage: make publish VERSION=x.y.z [PUBLISH=1]" >&2; exit 1; }
+	@$(MAKE) release
+	./scripts/package.sh $(VERSION) $(if $(PUBLISH),--publish,)
 
 ---------------: ## ---------------
 
