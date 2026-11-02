@@ -34,12 +34,14 @@ struct ContentView: View {
                             title: $leftTitle,
                             text: $leftText,
                             changedLines: result.leftChangedLines,
+                            changedRanges: result.leftChangedRanges,
                             side: .left
                         )
                         editorPane(
                             title: $rightTitle,
                             text: $rightText,
                             changedLines: result.rightChangedLines,
+                            changedRanges: result.rightChangedRanges,
                             side: .right
                         )
                     }
@@ -112,6 +114,7 @@ struct ContentView: View {
         title: Binding<String>,
         text: Binding<String>,
         changedLines: Set<Int>,
+        changedRanges: [Int: [Range<Int>]],
         side: Side
     ) -> some View {
         VStack(spacing: 0) {
@@ -140,10 +143,12 @@ struct ContentView: View {
             HighlightedTextEditor(
                 text: text,
                 changedLines: changedLines,
+                changedRanges: changedRanges,
                 disableLineWrap: disableLineWrap,
-                color: side == .left
-                    ? NSColor.systemRed.withAlphaComponent(0.18)
-                    : NSColor.systemGreen.withAlphaComponent(0.18),
+                lineColor: (side == .left ? NSColor.systemRed : NSColor.systemGreen)
+                    .withAlphaComponent(0.10),
+                changeColor: (side == .left ? NSColor.systemRed : NSColor.systemGreen)
+                    .withAlphaComponent(0.35),
                 onFileDrop: { loadFile($0, into: side) }
             )
             .accessibilityLabel(side == .left ? "Left text" : "Right text")
@@ -218,15 +223,17 @@ private extension ContentView {
                                         comparisonCell(
                                             number: row.leftNumber,
                                             text: row.leftText,
+                                            ranges: row.leftRanges,
                                             color: row.kind == .unchanged || row.leftText == nil
-                                                ? .clear : Color.red.opacity(0.14),
+                                                ? .clear : .red,
                                             width: geometry.size.width / 2
                                         )
                                         comparisonCell(
                                             number: row.rightNumber,
                                             text: row.rightText,
+                                            ranges: row.rightRanges,
                                             color: row.kind == .unchanged || row.rightText == nil
-                                                ? .clear : Color.green.opacity(0.14),
+                                                ? .clear : .green,
                                             width: geometry.size.width / 2
                                         )
                                     }
@@ -249,9 +256,10 @@ private extension ContentView {
                     comparisonCell(
                         number: side == .left ? row.leftNumber : row.rightNumber,
                         text: side == .left ? row.leftText : row.rightText,
+                        ranges: side == .left ? row.leftRanges : row.rightRanges,
                         color: row.kind == .unchanged ||
                             (side == .left ? row.leftText : row.rightText) == nil
-                            ? .clear : (side == .left ? Color.red : Color.green).opacity(0.14),
+                            ? .clear : (side == .left ? .red : .green),
                         width: width
                     )
                     Divider()
@@ -275,6 +283,7 @@ private extension ContentView {
     private func comparisonCell(
         number: Int?,
         text: String?,
+        ranges: [Range<Int>],
         color: Color,
         width: CGFloat
     ) -> some View {
@@ -282,7 +291,7 @@ private extension ContentView {
             Text(number.map(String.init) ?? "")
                 .foregroundStyle(.tertiary)
                 .frame(width: 36, alignment: .trailing)
-            Text(text ?? " ")
+            highlightedText(text ?? " ", ranges: ranges, color: color.opacity(0.35))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(disableLineWrap ? 1 : nil)
                 .textSelection(.enabled)
@@ -291,7 +300,32 @@ private extension ContentView {
         .padding(.vertical, 3)
         .padding(.horizontal, 7)
         .frame(width: width, alignment: .topLeading)
-        .background(color)
+        .background(color.opacity(0.10))
+    }
+
+    private func highlightedText(_ text: String, ranges: [Range<Int>], color: Color) -> Text {
+        let source = text as NSString
+        var highlighted = AttributedString()
+        var position = 0
+        for range in ranges {
+            if position < range.lowerBound {
+                highlighted += AttributedString(source.substring(with: NSRange(
+                    location: position,
+                    length: range.lowerBound - position
+                )))
+            }
+            var changed = AttributedString(source.substring(with: NSRange(
+                location: range.lowerBound,
+                length: range.upperBound - range.lowerBound
+            )))
+            changed.backgroundColor = color
+            highlighted += changed
+            position = range.upperBound
+        }
+        if position < source.length {
+            highlighted += AttributedString(source.substring(from: position))
+        }
+        return Text(highlighted)
     }
 
     private func chooseFile(for side: Side) {

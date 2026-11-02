@@ -4,8 +4,10 @@ import SwiftUI
 struct HighlightedTextEditor: NSViewRepresentable {
     @Binding var text: String
     let changedLines: Set<Int>
+    let changedRanges: [Int: [Range<Int>]]
     let disableLineWrap: Bool
-    let color: NSColor
+    let lineColor: NSColor
+    let changeColor: NSColor
     let onFileDrop: (URL) -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -82,8 +84,18 @@ struct HighlightedTextEditor: NSViewRepresentable {
             if changedLines.contains(line) {
                 layoutManager.addTemporaryAttribute(
                     .backgroundColor,
-                    value: color,
+                    value: lineColor,
                     forCharacterRange: NSRange(location: start, length: end - start)
+                )
+            }
+            for range in changedRanges[line] ?? [] where range.upperBound <= contentsEnd - start {
+                layoutManager.addTemporaryAttribute(
+                    .backgroundColor,
+                    value: changeColor,
+                    forCharacterRange: NSRange(
+                        location: start + range.lowerBound,
+                        length: range.upperBound - range.lowerBound
+                    )
                 )
             }
             position = end

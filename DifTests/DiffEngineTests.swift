@@ -7,6 +7,8 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.rows.map(\.kind), [.unchanged, .removed, .unchanged, .added])
         XCTAssertEqual(result.rows.map(\.leftNumber), [1, 2, 3, nil])
         XCTAssertEqual(result.rows.map(\.rightNumber), [1, nil, 2, 3])
+        XCTAssertEqual(result.rows[1].leftRanges, [0 ..< 1])
+        XCTAssertEqual(result.rows[3].rightRanges, [0 ..< 1])
     }
 
     func testChangedLineIsPaired() {
@@ -14,6 +16,32 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.rows.map(\.kind), [.unchanged, .modified, .unchanged])
         XCTAssertEqual(result.leftChangedLines, [1])
         XCTAssertEqual(result.rightChangedLines, [1])
+    }
+
+    func testModifiedLineHighlightsSeparateChanges() {
+        let result = DiffEngine.compare("cat and dog", "bat and dig")
+        XCTAssertEqual(result.rows[0].leftRanges, [0 ..< 1, 9 ..< 10])
+        XCTAssertEqual(result.rows[0].rightRanges, [0 ..< 1, 9 ..< 10])
+        XCTAssertEqual(result.leftChangedRanges[0], [0 ..< 1, 9 ..< 10])
+        XCTAssertEqual(result.rightChangedRanges[0], [0 ..< 1, 9 ..< 10])
+    }
+
+    func testInsertedCharacterHighlightsOnlyNewSide() {
+        let result = DiffEngine.compare("color", "colour")
+        XCTAssertEqual(result.rows[0].leftRanges, [])
+        XCTAssertEqual(result.rows[0].rightRanges, [4 ..< 5])
+        XCTAssertEqual(result.leftChangedLines, [0])
+        XCTAssertEqual(result.rightChangedLines, [0])
+    }
+
+    func testHighlightRangesUseUTF16OffsetsAndIgnoreWhitespace() {
+        let emoji = DiffEngine.compare("a😀b", "a😎b")
+        XCTAssertEqual(emoji.rows[0].leftRanges, [1 ..< 3])
+        XCTAssertEqual(emoji.rows[0].rightRanges, [1 ..< 3])
+
+        let whitespace = DiffEngine.compare("x 1", "x\t2", ignoringWhitespace: true)
+        XCTAssertEqual(whitespace.rows[0].leftRanges, [2 ..< 3])
+        XCTAssertEqual(whitespace.rows[0].rightRanges, [2 ..< 3])
     }
 
     func testEmptyAndRepeatedLines() {
