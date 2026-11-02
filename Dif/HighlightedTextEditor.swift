@@ -62,7 +62,7 @@ struct HighlightedTextEditor: NSViewRepresentable {
         if wrapChanged {
             configureLineWrap(scrollView, textView)
         }
-        if disableLineWrap, textChanged || wrapChanged {
+        if disableLineWrap, textChanged, !wrapChanged {
             textView.sizeToFit()
         }
         guard let layoutManager = textView.layoutManager else { return }
@@ -103,7 +103,7 @@ struct HighlightedTextEditor: NSViewRepresentable {
         }
     }
 
-    private func configureLineWrap(_ scrollView: NSScrollView, _ textView: NSTextView) {
+    func configureLineWrap(_ scrollView: NSScrollView, _ textView: NSTextView) {
         scrollView.hasHorizontalScroller = disableLineWrap
         textView.isHorizontallyResizable = disableLineWrap
         textView.autoresizingMask = disableLineWrap ? [] : [.width]
@@ -114,6 +114,11 @@ struct HighlightedTextEditor: NSViewRepresentable {
         )
         if disableLineWrap {
             textView.sizeToFit()
+        } else {
+            let width = scrollView.contentSize.width
+            textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
+            textView.sizeToFit()
+            textView.setFrameSize(NSSize(width: width, height: textView.frame.height))
         }
     }
 
