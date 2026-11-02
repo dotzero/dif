@@ -127,6 +127,12 @@ struct ContentView: View {
                     Label("Open File", systemImage: "doc.badge.plus")
                 }
                 .accessibilityLabel(side == .left ? "Open left file" : "Open right file")
+                Button {
+                    clearPane(side)
+                } label: {
+                    Label("Clear", systemImage: "xmark.circle")
+                }
+                .accessibilityLabel(side == .left ? "Clear left pane" : "Clear right pane")
             }
             .padding(.horizontal, 12)
             .frame(height: 42)
@@ -312,6 +318,17 @@ private extension ContentView {
             }
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func clearPane(_ side: Side) {
+        switch side {
+        case .left:
+            leftText = ""
+            leftTitle = "Original"
+        case .right:
+            rightText = ""
+            rightTitle = "Modified"
         }
     }
 
