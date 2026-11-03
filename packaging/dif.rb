@@ -7,7 +7,7 @@ cask "dif" do
   desc "Dif is a small macOS app for comparing two pieces of text side by side"
   homepage "https://github.com/dotzero/dif"
 
-  depends_on macos: :sonoma
+  depends_on macos: :tahoe
   depends_on arch: :arm64
 
   app "Dif.app"

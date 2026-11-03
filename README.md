@@ -1,48 +1,55 @@
 # Dif
 
+Dif is a free native macOS app for comparing two pieces of text side by side.
+
 ![Dif app icon](Dif/Assets.xcassets/AppIcon.appiconset/icon_256x256.png)
 
-**Fast text comparison, without the clutter.** Dif keeps things simple: two panes, clear highlights, and just the controls you need. Paste text or drop in files; the diff updates as you edit.
+Paste text or open files in the Original and Modified panes. Dif aligns the lines, highlights changes within them, and updates the comparison as you edit. Switch between **Edit** and **Compare** in the toolbar, and use **Comparison Options** to hide whitespace changes or disable line wrapping.
 
-## What it does
+## Features
 
-- Aligns added, removed, and changed lines, with highlighting inside changed lines.
-- Shows line numbers in the comparison view and a change count in the toolbar.
-- Lets you name each side and switch between editing and the aligned comparison.
-- Can ignore whitespace changes, including blank lines and line breaks.
-- Can turn off line wrapping for long lines.
-- Reads UTF-8 and BOM-marked UTF-16 files. Binary files and unsupported encodings are rejected.
+- 🔍 Aligns added, removed, and changed lines with highlights inside changed lines
+- ✍️ Lets you edit text, name each side, and clear either pane
+- 📂 Opens text files or accepts them by dragging them into a pane
+- ⚙️ Can ignore whitespace changes and turn off line wrapping
 
-## Use Dif
+## Requirements
 
-1. Paste text into the **Original** and **Modified** panes, or use **Open File** or drag a file into either pane.
-2. Edit the text as needed. Dif updates the comparison automatically.
-3. Click **View comparison** to inspect aligned lines. Click **Edit texts** to return to the editors.
-4. Open the sidebar to toggle **Hide whitespace changes** or **Disable line wrap**.
+- macOS 26.0 or newer
 
-Dif runs offline. It only reads files you select, never writes to them, and does not save your text or settings.
+Dif has no third-party runtime dependencies.
 
 ## Install
 
-Dif requires macOS 14 or later. Check [GitHub Releases](https://github.com/dotzero/dif/releases) for a downloadable build, or build it from source.
-
-## Build from source
-
-Install Xcode, SwiftFormat, and SwiftLint. From the repository root:
+Install with Homebrew:
 
 ```sh
+brew install dotzero/tap/dif
+```
+
+Or install manually:
+
+1. Download the latest `.dmg` from [Releases](https://github.com/dotzero/dif/releases)
+2. Open the `.dmg` and drag Dif to your Applications folder
+3. Launch Dif. If macOS blocks it, open **System Settings → Privacy & Security** and click **Open Anyway**
+
+## Build From Source
+
+Install Xcode, then clone the repository and build the app:
+
+```sh
+git clone https://github.com/dotzero/dif.git
+cd dif
 make build
 open build/DerivedData/Build/Products/Debug/Dif.app
 ```
 
-To run formatting checks and the XCTest suite:
+To run formatting checks and tests, install SwiftFormat and SwiftLint, then run `make check`.
 
-```sh
-make check
-```
+## File Access
 
-You can also open `Dif.xcodeproj` in Xcode and run the `Dif` scheme. The Xcode project is generated from `project.yml`; after editing that file, run `xcodegen generate` (requires [XcodeGen](https://github.com/yonaskolb/XcodeGen)).
+Dif only reads files you choose through **Open** or drag and drop. It supports UTF-8 and BOM-marked UTF-16 text; binary files and unsupported encodings are rejected. It does not write to your files or save your text and options.
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://opensource.org/license/mit)

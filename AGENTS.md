@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-`Dif/` contains the macOS app. `ContentView.swift` builds the interface, `DiffEngine.swift` calculates aligned changes, `TextFileLoader.swift` reads text files, and `HighlightedTextEditor.swift` wraps AppKit's editor. Icon assets live in `Dif/Assets.xcassets/`; the source artwork is in `artwork/`. XCTest cases are in `DifTests/`. Edit `project.yml` for target or build setting changes, then run `xcodegen generate` to refresh `Dif.xcodeproj`. `build/` and `dist/` are ignored local outputs.
+`Dif/` contains the macOS app. `ContentView.swift` builds the editor, comparison view, options inspector, and status bar. `DiffEngine.swift` calculates aligned changes, `TextFileLoader.swift` decodes selected files, and `HighlightedTextEditor.swift` wraps AppKit's editor. Icon assets live in `Dif/Assets.xcassets/`; XCTest cases are in `DifTests/`. `packaging/` and `scripts/package.sh` contain the release cask, notes, and DMG workflow. Edit `project.yml` for target or build setting changes, then run `xcodegen generate` to refresh `Dif.xcodeproj`. `build/`, `DerivedData/`, and `dist/` are ignored local outputs.
 
 ## Build, Test, and Development Commands
 
@@ -11,8 +11,9 @@
 - `make lint`: check SwiftFormat and SwiftLint rules.
 - `make check`: run linting and tests together.
 - `make release VERSION=1.0.0`: clean and build a Release app with an explicit marketing version.
+- `make publish VERSION=1.0.0`: build a Release app and package a local DMG. `PUBLISH=1` also publishes a GitHub release and updates the Homebrew cask; use it only when publishing is intended.
 
-Open `Dif.xcodeproj` in Xcode and select the `Dif` scheme for interactive development.
+Open `Dif.xcodeproj` in Xcode and select the `Dif` scheme for interactive development. The deployment target is macOS 26.0.
 
 ## Coding Style & Naming Conventions
 
@@ -20,7 +21,7 @@ Use four spaces for Swift indentation and keep lines within the 120-character fo
 
 ## Testing Guidelines
 
-Use XCTest in `DifTests/`. Add focused cases for changed, inserted, and deleted lines, whitespace handling, empty inputs, supported encodings, and rejected binary data when those behaviors change. There is no formal coverage threshold. Run `make check` before a pull request.
+Use XCTest in `DifTests/`. Add focused cases for changed, inserted, and deleted lines, whitespace handling, empty inputs, supported encodings, rejected binary data, and editor wrapping when those behaviors change. There is no formal coverage threshold. Run `make check` before a pull request.
 
 ## Agent Verification
 
@@ -32,4 +33,4 @@ Recent commits use short imperative subjects, such as `Add lint configuration an
 
 ## Security & Configuration
 
-Dif is offline and sandboxed. File access is read-only and user selected; preserve that behavior when changing file loading. Do not add persistence or network access without an explicit product requirement.
+Dif is offline and sandboxed. File access is read-only and user selected; preserve that behavior when changing file loading. Text, labels, and comparison options are held only in memory. Do not add persistence or network access without an explicit product requirement.
