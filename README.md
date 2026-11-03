@@ -2,7 +2,7 @@
 
 Dif is a free native macOS app for comparing two pieces of text side by side.
 
-![Dif app icon](Dif/Assets.xcassets/AppIcon.appiconset/icon_256x256.png)
+![](screenshot.png)
 
 Paste text or open files in the Original and Modified panes. Dif aligns the lines, highlights changes within them, and updates the comparison as you edit. Switch between **Edit** and **Compare** in the toolbar, and use **Comparison Options** to hide whitespace changes or disable line wrapping.
 
