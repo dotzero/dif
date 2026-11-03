@@ -18,41 +18,56 @@ struct ContentView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        GeometryReader { geometry in
-            content.frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
-        }
+        content
     }
 
     private var content: some View {
         VStack(spacing: 0) {
-            header
-            Divider()
-            HStack(spacing: 0) {
-                if showsSettings {
-                    settingsPanel
-                    Divider()
-                }
-                if showsComparison {
-                    comparison
-                } else {
-                    HSplitView {
-                        editorPane(
-                            title: $leftTitle,
-                            text: $leftText,
-                            changedLines: result.leftChangedLines,
-                            changedRanges: result.leftChangedRanges,
-                            side: .left
-                        )
-                        editorPane(
-                            title: $rightTitle,
-                            text: $rightText,
-                            changedLines: result.rightChangedLines,
-                            changedRanges: result.rightChangedRanges,
-                            side: .right
-                        )
-                    }
+            if showsComparison {
+                comparison
+            } else {
+                HSplitView {
+                    editorPane(
+                        title: $leftTitle,
+                        text: $leftText,
+                        changedLines: result.leftChangedLines,
+                        changedRanges: result.leftChangedRanges,
+                        side: .left
+                    )
+                    editorPane(
+                        title: $rightTitle,
+                        text: $rightText,
+                        changedLines: result.rightChangedLines,
+                        changedRanges: result.rightChangedRanges,
+                        side: .right
+                    )
                 }
             }
+            Divider()
+            statusBar
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("View", selection: $showsComparison) {
+                    Text("Edit").tag(false)
+                    Text("Compare").tag(true)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 190)
+            }
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showsSettings.toggle()
+                } label: {
+                    Label("Comparison Options", systemImage: "slider.horizontal.3")
+                }
+                .help(showsSettings ? "Hide comparison options" : "Show comparison options")
+            }
+        }
+        .inspector(isPresented: $showsSettings) {
+            settingsPanel
+                .inspectorColumnWidth(min: 220, ideal: 260, max: 300)
         }
         .onChange(of: leftText) { _, _ in scheduleComparison() }
         .onChange(of: rightText) { _, _ in scheduleComparison() }
@@ -71,49 +86,37 @@ struct ContentView: View {
         }
     }
 
-    private var header: some View {
-        HStack(spacing: 10) {
-            Button {
-                showsSettings.toggle()
-            } label: {
-                Image(systemName: "sidebar.left")
-            }
-            .accessibilityLabel(showsSettings ? "Hide settings" : "Show settings")
-            .help(showsSettings ? "Hide settings" : "Show settings")
-            Image(systemName: "text.alignleft")
-                .foregroundStyle(.tint)
-            Text("Dif")
-                .font(.headline)
-            Spacer()
-            Text(result.changeCount == 0 ? "No differences" :
+    private var statusBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: result.changeCount == 0 ? "checkmark.circle" : "circle.lefthalf.filled")
+                .foregroundStyle(result.changeCount == 0 ? Color.secondary : Color.accentColor)
+            Text(leftText.isEmpty && rightText.isEmpty ? "Ready to compare" :
+                result.changeCount == 0 ? "No differences" :
                 "\(result.changeCount) \(result.changeCount == 1 ? "change" : "changes")")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Button {
-                showsComparison.toggle()
-            } label: {
-                Label(
-                    showsComparison ? "Edit texts" : "View comparison",
-                    systemImage: showsComparison ? "square.and.pencil" : "square.split.2x1"
-                )
+            Spacer()
+            if hideWhitespaceChanges {
+                Text("Whitespace ignored")
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 16)
-        .frame(height: 46)
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 14)
+        .frame(height: 30)
+        .background(.bar)
     }
 
     private var settingsPanel: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Settings")
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Comparison Options")
                 .font(.headline)
             Toggle("Hide whitespace changes", isOn: $hideWhitespaceChanges)
+            Divider()
             Toggle("Disable line wrap", isOn: $disableLineWrap)
             Spacer()
         }
-        .padding(16)
-        .frame(width: 230)
+        .padding(20)
         .frame(maxHeight: .infinity, alignment: .topLeading)
-        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private func editorPane(
@@ -124,27 +127,7 @@ struct ContentView: View {
         side: Side
     ) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: 10) {
-                TextField("Label", text: title)
-                    .textFieldStyle(.plain)
-                    .font(.headline)
-                    .accessibilityLabel(side == .left ? "Left label" : "Right label")
-                Spacer()
-                Button {
-                    chooseFile(for: side)
-                } label: {
-                    Label("Open File", systemImage: "doc.badge.plus")
-                }
-                .accessibilityLabel(side == .left ? "Open left file" : "Open right file")
-                Button {
-                    clearPane(side)
-                } label: {
-                    Label("Clear", systemImage: "xmark.circle")
-                }
-                .accessibilityLabel(side == .left ? "Clear left pane" : "Clear right pane")
-            }
-            .padding(.horizontal, 12)
-            .frame(height: 42)
+            editorHeader(title: title, hasText: !text.wrappedValue.isEmpty, side: side)
             Divider()
             HighlightedTextEditor(
                 text: text,
@@ -159,6 +142,19 @@ struct ContentView: View {
                 focusesOnFirstAppearance: side == .left
             )
             .accessibilityLabel(side == .left ? "Left text" : "Right text")
+            .overlay {
+                if text.wrappedValue.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 28, weight: .light))
+                        Text("Paste text or drop a file")
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(.tertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .allowsHitTesting(false)
+                }
+            }
         }
         .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }
@@ -177,6 +173,42 @@ struct ContentView: View {
             return true
         }
     }
+
+    private func editorHeader(title: Binding<String>, hasText: Bool, side: Side) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: side == .left ? "minus.circle.fill" : "plus.circle.fill")
+                .foregroundStyle(side == .left ? .red : .green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(side == .left ? "ORIGINAL" : "MODIFIED")
+                    .font(.system(size: 10, weight: .semibold))
+                    .tracking(1)
+                    .foregroundStyle(.secondary)
+                TextField("Label", text: title)
+                    .textFieldStyle(.plain)
+                    .font(.headline)
+                    .accessibilityLabel(side == .left ? "Left label" : "Right label")
+            }
+            Spacer()
+            Button {
+                chooseFile(for: side)
+            } label: {
+                Label("Open", systemImage: "folder")
+            }
+            .accessibilityLabel(side == .left ? "Open left file" : "Open right file")
+            Button {
+                clearPane(side)
+            } label: {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.borderless)
+            .disabled(!hasText)
+            .accessibilityLabel(side == .left ? "Clear left pane" : "Clear right pane")
+            .help("Clear text")
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 62)
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
 }
 
 private extension ContentView {
@@ -192,8 +224,9 @@ private extension ContentView {
             }
             .font(.headline)
             .lineLimit(1)
-            .padding(.horizontal, 14)
-            .frame(height: 40)
+            .padding(.horizontal, 18)
+            .frame(height: 62)
+            .background(Color(nsColor: .controlBackgroundColor))
             Divider()
             if leftText.isEmpty, rightText.isEmpty {
                 ContentUnavailableView(
