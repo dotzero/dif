@@ -149,7 +149,8 @@ struct ContentView: View {
                     .withAlphaComponent(0.10),
                 changeColor: (side == .left ? NSColor.systemRed : NSColor.systemGreen)
                     .withAlphaComponent(0.35),
-                onFileDrop: { loadFile($0, into: side) }
+                onFileDrop: { loadFile($0, into: side) },
+                focusesOnFirstAppearance: side == .left
             )
             .accessibilityLabel(side == .left ? "Left text" : "Right text")
         }

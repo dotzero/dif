@@ -9,13 +9,15 @@ struct HighlightedTextEditor: NSViewRepresentable {
     let lineColor: NSColor
     let changeColor: NSColor
     let onFileDrop: (URL) -> Void
+    var focusesOnFirstAppearance = false
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
+        let scrollView = InitiallyFocusedScrollView()
+        scrollView.focusesOnFirstAppearance = focusesOnFirstAppearance
         let textView = FileDropTextView(frame: .zero)
         scrollView.borderType = .noBorder
         scrollView.hasVerticalScroller = true
@@ -132,6 +134,20 @@ struct HighlightedTextEditor: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+        }
+    }
+}
+
+private final class InitiallyFocusedScrollView: NSScrollView {
+    var focusesOnFirstAppearance = false
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard focusesOnFirstAppearance, window != nil else { return }
+        focusesOnFirstAppearance = false
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.window, let textView = self.documentView as? NSTextView else { return }
+            window.makeFirstResponder(textView)
         }
     }
 }
