@@ -18,6 +18,12 @@ struct ContentView: View {
     @State private var errorMessage: String?
 
     var body: some View {
+        GeometryReader { geometry in
+            content.frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             header
             Divider()
@@ -195,6 +201,7 @@ private extension ContentView {
                     systemImage: "square.split.2x1",
                     description: Text("Paste text or drop a file into each side.")
                 )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 GeometryReader { geometry in
                     if disableLineWrap {
